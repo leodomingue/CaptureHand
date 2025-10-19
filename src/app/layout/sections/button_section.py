@@ -56,7 +56,7 @@ class ButtonSection:
 
         pygame.draw.rect(self.screen, Colors.BUTTON_SECTION_BORDER, button_section_rect, 2)
         
-        self.draw_buttons(4, button_section_rect)
+        self.draw_buttons(len(AppConfig.GESTURE_FOLDERS), button_section_rect)
 
     def handle_click(self, pos):
         print("Botones activos:", len(self.buttons_rect))
