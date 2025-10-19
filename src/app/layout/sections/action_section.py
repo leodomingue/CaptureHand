@@ -14,7 +14,8 @@ class ActionSection:
         self.camera = camera
 
     def update(self):
-        if not self.is_active:
+        if not self.camera.is_recording:
+            self.is_active = False
             return
         
         recording_time = self.camera.get_recording_progress()
@@ -25,8 +26,6 @@ class ActionSection:
             self.current_action_index = 1
         elif recording_time < self.delays[0] + self.delays[1] + self.delays[2]:
             self.current_action_index = 2
-        else:
-            self.is_active = False
 
 
     def start_action_sequence(self):
