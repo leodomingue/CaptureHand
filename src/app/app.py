@@ -10,6 +10,8 @@ class GestureRecorderApp:
         self.screen = pygame.display.set_mode((AppConfig.SCREEN_WIDTH, AppConfig.SCREEN_HEIGHT))
         pygame.display.set_caption("Tomador de Datos de Gestos de la Mano")
 
+        AppConfig.ensure_gesture_folders_exist()
+
         self.camera = Camera()
         self.camera.initialize_camera()
         self.layout = MainLayout(self.screen, self.camera)
