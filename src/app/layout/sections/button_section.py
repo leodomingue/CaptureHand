@@ -3,11 +3,12 @@ import os
 from src.app.config import AppConfig, Colors
 
 class ButtonSection: 
-    def __init__(self, screen, camera):
+    def __init__(self, screen, camera, action_section):
         self.screen = screen
         self.camera = camera
         self.font = pygame.font.Font(None, 18)
         self.buttons_rect = []
+        self.action_section = action_section #Referenciamos al otro section
 
     def draw_buttons(self, num_buttons, button_section_rect):
         current_button_rects = []
@@ -61,8 +62,9 @@ class ButtonSection:
         print("Botones activos:", len(self.buttons_rect))
         for i,button in enumerate(self.buttons_rect):
             if button.collidepoint(pos):
-                print(f"Botón {i} clickeado")
+                self.action_section.start_action_sequence()
+
                 folder_path = os.path.join(AppConfig.DATA_FOLDER, AppConfig.GESTURE_FOLDERS[i])
-                self.camera.start_recording(5, folder_path, AppConfig.GESTURE_FOLDERS[i])
+                self.camera.start_recording(6, folder_path, AppConfig.GESTURE_FOLDERS[i])
                 return True
         return False
