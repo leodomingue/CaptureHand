@@ -14,4 +14,4 @@ pip install -r requirements.txt
 python main.py
 ```
 
-3. Opcionalmente create un envioremnt 
+3. Opcionalmente create un environment
