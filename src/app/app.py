@@ -40,11 +40,34 @@ class GestureRecorderApp:
         self.data_folder = "gesture_data"
         os.makedirs(self.data_folder, exist_ok=True)
 
+        self.gesture_folders = ["Derecha-Pulgar-indice","Derecha-Pulgar-Medio", "Derecha-Pulgar-Anular","Derecha-Pulgar-Meñique"]
+
+        for folder in self.gesture_folders:
+            folder_path = os.path.join(self.data_folder, folder)
+            os.makedirs(folder_path, exist_ok=True)
+
+        self.button_rects = []
+
+
+    def handle_button_click(self, pos):
+        for i, button_rect in enumerate(self.button_rects):
+            if button_rect.collidepoint(pos):
+                gesture_folder = self.gesture_folders[i]
+                folder_path = os.path.join(self.data_folder, gesture_folder)
+
+                self.camera.start_recording(5, folder_path, gesture_folder)
+
+        return False
 
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False
+            
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    if self.handle_button_click(event.pos):
+                        print("pulsado")
             
         return True
                 
@@ -65,6 +88,7 @@ class GestureRecorderApp:
 
 
     def draw_buttons(self, num_buttons, button_section_rect):
+        current_button_rects = []
         #Tamaño del contenedor
         button_section_width = button_section_rect.width
         button_section_height = button_section_rect.height
@@ -81,10 +105,19 @@ class GestureRecorderApp:
         start_x = button_section_x + (button_section_width - total_buttons_width) // 2
         start_y = button_section_y + (button_section_height - button_height) // 2
 
-        
+        gesture_names = ["Pulgar-Índice","Pulgar-Medio", "Pulgar-Anular","Pulgar-Meñique"]
+
         for i in range(num_buttons):
             button_rect = pygame.Rect(start_x + i * (button_witdth + button_margin), start_y, button_witdth, button_height)
             pygame.draw.rect(self.screen, self.button_colors[i], button_rect)
+
+            current_button_rects.append(button_rect)
+
+            button_text = self.font_small.render(f"{gesture_names[i]}", True, (0, 0, 0))
+            text_rect = button_text.get_rect(center=button_rect.center)
+            self.screen.blit(button_text, text_rect)
+
+        self.button_rects = current_button_rects
 
 
     def draw_button_section(self, position):
