@@ -4,6 +4,7 @@ from src.app.layout.sections.title_section import TitleSection
 from src.app.layout.sections.instruction_section import InstructionSection
 from src.app.layout.sections.camera_section import CameraSection
 from src.app.layout.sections.button_section import ButtonSection
+from src.app.layout.sections.action_section import ActionSection
 
 
 class MainLayout:
@@ -16,7 +17,9 @@ class MainLayout:
         self.title_section = TitleSection(screen)
         self.instructions_section = InstructionSection(screen)
         self.camera_section = CameraSection(screen, camera)
-        self.button_section = ButtonSection(screen, camera)
+        self.action_section = ActionSection(screen, camera)
+        self.button_section = ButtonSection(screen, camera, self.action_section)
+
 
     def handle_events(self): 
         for event in pygame.event.get():
@@ -31,7 +34,10 @@ class MainLayout:
         #Pensa que por cada tick se "suponerpone" la imagen anterior para generar sensacion de movimiento en la app
         self.screen.fill(Colors.BACKGROUND)
 
+        self.action_section.update()
+
         title_section_rect = self.title_section.draw_title_section((0,0), "Visualizacion solo manos")
         instructions_rect = self.instructions_section.draw_instructions_section((0, title_section_rect.height))
         self.camera_section.draw_camera((instructions_rect.width,title_section_rect.height))
+        self.action_section.draw_action_section((0,instructions_rect.height))
         self.button_section.draw_button_section((0,self.screen.get_height()-150))
