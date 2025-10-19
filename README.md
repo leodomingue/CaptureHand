@@ -32,17 +32,17 @@ git commit -m "commit (nombre): hago tal cosa"
 git push -u origin nombre-de-su-branch
 ```
 
-Luego en GitHub van a **Pull Requests** y la mandan a `main/master`.
+Luego en GitHub van a **Pull Requests** y la mandan a `master`.
 
 Luego si quieren volver al branch
 ```bash
 # 1. Actualizar main local
-git checkout main
-git pull origin main
+git checkout master
+git pull origin master
 
 # 2. Volver a tu branch de trabajo
 git checkout nombre-de-su-branch
 
 # 3. Actualizar tu branch con los últimos cambios de main
-git merge main
+git merge master
 ```
