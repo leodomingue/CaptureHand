@@ -1,3 +1,3 @@
-from .main_layout import MainLayout
+from .layout_factory import LayoutFactory
 
-__all__ = ["MainLayout"]
+__all__ = ["LayoutFactory"]
