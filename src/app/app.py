@@ -2,7 +2,7 @@ import pygame
 import sys
 from src.camera.camera import Camera
 from src.app.config import AppConfig
-from src.app.layout.main_layout import MainLayout
+from src.app.layout.layout_factory import LayoutFactory
 
 class GestureRecorderApp:
     def __init__(self):
@@ -14,18 +14,23 @@ class GestureRecorderApp:
 
         self.camera = Camera()
         self.camera.initialize_camera()
-        self.layout = MainLayout(self.screen, self.camera)
+
+        #Si alguien quiere, puede crear su layout, agregarlo al facotry ya estaria
+        self.current_layout = LayoutFactory.create_layout("right_hand", self)
+
+    def change_layout(self, name):
+        self.current_layout.on_exit()
+        self.current_layout = LayoutFactory.create_layout(name, self)
+        self.current_layout.on_enter()
 
     def run(self):
         clock = pygame.time.Clock()
         running = True
 
-        self.layout.draw()
-        pygame.display.flip()
-
         while running:
-            running = self.layout.handle_events()
-            self.layout.draw()
+            events = pygame.event.get()
+            running = self.current_layout.handle_events(events)
+            self.current_layout.draw()
             pygame.display.flip()
             clock.tick(30)
 
