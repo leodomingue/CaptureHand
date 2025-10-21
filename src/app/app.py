@@ -16,12 +16,10 @@ class GestureRecorderApp:
         self.camera.initialize_camera()
 
         #Si alguien quiere, puede crear su layout, agregarlo al facotry ya estaria
-        self.current_layout = LayoutFactory.create_layout("right_hand", self)
+        self.current_layout = LayoutFactory.create_layout("main", self)
 
     def change_layout(self, name):
-        self.current_layout.on_exit()
         self.current_layout = LayoutFactory.create_layout(name, self)
-        self.current_layout.on_enter()
 
     def run(self):
         clock = pygame.time.Clock()
