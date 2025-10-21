@@ -12,6 +12,8 @@ class Camera:
         self.frames = []
         self.is_recording = False
         self.recording_start_time = 0
+        self.real_fps = 30.0 
+        self.fps_calculated = False
 
 
     def initialize_camera(self):
@@ -19,8 +21,38 @@ class Camera:
         
         if not self.cap.isOpened():
             raise Exception("No se pudo abrir la cámara")
+        
+        self.calculate_real_fps()
     
         return True
+    
+    # Precalculamos los fps reales para saber cuanto es el trackng de los fps por segundo
+    def calculate_real_fps(self):
+        # Se toman muestran al inicializar la camara por 60 frames
+        num_frames_to_test = 60
+        frames = []
+        start_time = time.time()
+        
+        for i in range(num_frames_to_test):
+            ret, frame = self.cap.read()
+            if ret:
+                frames.append(frame)
+            else:
+                break
+            time.sleep(0.001)
+        
+        end_time = time.time()
+        actual_duration = end_time - start_time
+        
+
+        self.real_fps = len(frames) / actual_duration
+        self.fps_calculated = True
+        print(f"FPS reales calculados: {self.real_fps:.2f}")
+
+        
+        # Se limpia la memoria
+        frames.clear()
+
     
     def get_preview_frame(self):
         if self.cap and self.cap.isOpened():
@@ -41,45 +73,46 @@ class Camera:
 
         self.is_recording = True
         self.recording_start_time = time.time()
-        self.frames = []
-        print(f"Grabando durante {duration} segundos...")
+        print(f"Grabando durante {duration} segundos con FPS: {self.real_fps:.2f}...")
 
         def record_loop():
-            end_time = time.time() + duration
-            
-            while self.is_recording and time.time() < end_time:
+
+            # Preparamos la ruta con el archivo a guardar
+            existing_videos = [f for f in os.listdir(folder_path) 
+                            if f.startswith(filename_prefix) and f.endswith('.mp4')]
+            next_number = len(existing_videos) + 1
+            filename = f"{filename_prefix}_{next_number}.mp4"
+            video_path = os.path.join(folder_path, filename)
+
+            #vemos las dimensiones y vemos si se graba correctamente
+            ret, first_frame = self.cap.read()
+            if not ret:
+                self.is_recording = False
+                return
+
+            height, width = first_frame.shape[:2]
+
+            #El programa para grabar
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            video_writer = cv2.VideoWriter(video_path, fourcc, self.real_fps, (width, height))
+
+            #Calculamos la cantidad de frames a grabar según los FPS reales y la duración
+            total_frames_to_record = int(round(duration * self.real_fps))
+            frame_count = 0
+
+            while self.is_recording and frame_count < total_frames_to_record:
                 ret, frame = self.cap.read()
                 if ret:
-                    self.frames.append(frame)
+                    video_writer.write(frame)
+                    frame_count += 1
                 else:
                     break
-            
+
+            #Liberamos los recursos
+            video_writer.release()
             self.is_recording = False
-            actual_duration = time.time() - self.recording_start_time
-            real_fps = len(self.frames) / actual_duration
-            print(f"Grabación finalizada. Duración real: {actual_duration:.2f}s, Frames: {real_fps}")
-            self.save_recording(self.frames, folder_path, filename_prefix, real_fps)
 
+            print(f"Grabación finalizada: {filename}")
+
+        #Lo hacemos en otro hilo
         threading.Thread(target=record_loop, daemon=True).start()
-    
-    def save_recording(self, frames, folder_path, filename_prefix, fps):
-        if not frames:
-            return False
-        
-        existing_videos = [f for f in os.listdir(folder_path) if f.startswith(filename_prefix) and f.endswith('.mp4')]
-        next_number = len(existing_videos) + 1
-        filename = f"{filename_prefix}_{next_number}.mp4"
-
-        video_path = os.path.join(folder_path, f"{filename}")
-
-        height, width = frames[0].shape[:2]
-
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')  
-        video_writer = cv2.VideoWriter(video_path, fourcc, fps, (width, height))
-
-        for frame in frames:
-            video_writer.write(frame)
-        
-        video_writer.release()
-        print(f"Video guardado como {filename} en {folder_path} ({len(frames)} frames)")
-        return True

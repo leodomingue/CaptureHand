@@ -20,7 +20,7 @@ class ButtonSection:
         
         #Tamaño de los botones y margen
         button_witdth = 120  
-        button_height = 90
+        button_height = 60
         button_margin = 50  
         
         #Tamaño que ocupan los botones botonoes + margen
@@ -46,15 +46,11 @@ class ButtonSection:
 
     def draw_button_section(self, position):
         button_section_width = self.screen.get_width()  
-        button_section_height = 150  
+        button_section_height = 100  
         button_section_x, button_section_y = position
 
         #Creamos un frame/rectangulo para guardar el contenido #(x,y,width,height)
-        button_section_rect = pygame.Rect(button_section_x, button_section_y, button_section_width, button_section_height) 
-        
-        pygame.draw.rect(self.screen, Colors.BUTTON_SECTION, button_section_rect) 
-
-        pygame.draw.rect(self.screen, Colors.BUTTON_SECTION_BORDER, button_section_rect, 2)
+        button_section_rect = pygame.Rect(button_section_x, button_section_y, button_section_width, button_section_height)  
         
         self.draw_buttons(len(AppConfig.GESTURE_FOLDERS), button_section_rect)
 
