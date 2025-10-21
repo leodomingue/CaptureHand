@@ -9,13 +9,11 @@ class InstructionSection:
 
     def draw_instructions_section(self, position):
         instructions_section_width = self.screen.get_width()//2
-        instructions_section_height = 400
+        instructions_section_height = 450
 
         instructions_section_x, instructions_section_y = position
 
         instructions_rect = pygame.Rect(instructions_section_x, instructions_section_y, instructions_section_width, instructions_section_height)
-
-        pygame.draw.rect(self.screen, Colors.BUTTON_SECTION, instructions_rect)
 
 
         instructions = [

@@ -34,12 +34,13 @@ class LeftHandLayout(BaseLayout):
     def draw(self):
         #DEBEMOS SIEMPRE POR CADA TICK RELLENAR EL FONDO DE NEGRO PARA "LIMPIAR LA IAMGEN"
         #Pensa que por cada tick se "suponerpone" la imagen anterior para generar sensacion de movimiento en la app
-        self.screen.fill(Colors.BACKGROUND)
+        self.screen.blit(self.background_image, (0, 0))
 
         self.action_section.update()
 
         title_section_rect = self.title_section.draw_title_section((0,0), "Visualizacion solo mano izquierda")
         instructions_rect = self.instructions_section.draw_instructions_section((0, title_section_rect.height))
-        self.camera_section.draw_camera((instructions_rect.width,title_section_rect.height))
+        camera_one_rect = self.camera_section.draw_camera((instructions_rect.width,title_section_rect.height))
+        camera_two_rect = self.camera_section.draw_camera((instructions_rect.width,camera_one_rect.bottom+10))
         self.action_section.draw_action_section((0,instructions_rect.height))
-        self.button_section.draw_button_section((0,self.screen.get_height()-150))
+        self.button_section.draw_button_section((0,self.screen.get_height()-100))

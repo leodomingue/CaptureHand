@@ -42,17 +42,21 @@ class ActionSection:
         #Indicamos Posicion topLeft
         action_section_x, action_section_y = position
 
+        action_section_surface = pygame.Surface((action_section_width, action_section_height), pygame.SRCALPHA)
+
         #Creamos la superficie
-        action_section_rect = pygame.Rect(action_section_x, action_section_y, action_section_width, action_section_height) 
+        action_section_surface.fill((255, 255, 255, 0)) 
 
         #Dibujamos/pegamos la superficie
-        pygame.draw.rect(self.screen, (255,255,255), action_section_rect)
+        self.screen.blit(action_section_surface, (action_section_x, action_section_y))
+
+        action_section_rect = pygame.Rect(action_section_x, action_section_y, action_section_width, action_section_height)
 
 
         if self.is_active and self.current_action_index < len(self.actions_sequence):
             current_action = self.actions_sequence[self.current_action_index]
             
-            action_text_surface = self.font.render(current_action, True, (0,0,0))
+            action_text_surface = self.font.render(current_action, True, (255,255,255))
             
             text_rect = action_text_surface.get_rect(center=action_section_rect.center)
             
@@ -61,7 +65,7 @@ class ActionSection:
         if not self.is_active:
             current_action = "-"
             
-            action_text_surface = self.font.render(current_action, True, (0,0,0))
+            action_text_surface = self.font.render(current_action, True, (255,255,255))
             
             text_rect = action_text_surface.get_rect(center=action_section_rect.center)
             

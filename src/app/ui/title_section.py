@@ -17,9 +17,6 @@ class TitleSection:
         #Creamos la superficie
         title_section_rect = pygame.Rect(title_section_x, title_section_y, title_section_width, title_section_height) 
 
-        #Dibujamos/pegamos la superficie
-        pygame.draw.rect(self.screen, Colors.BUTTON_SECTION, title_section_rect)
-
         #creamos superficie del texto (es otro "rectangulo" dentro del anterior)
         text_surface = self.font.render(title_text, True, Colors.TEXT) #El true es de antiliasing
 
