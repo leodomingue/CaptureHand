@@ -6,7 +6,7 @@ from src.app.ui.camera_section import CameraSection
 from src.app.ui.button_section import ButtonSection
 from src.app.ui.action_section import ActionSection
 from src.app.layout.base_layout import BaseLayout
-
+from src.app.ui.back_button import BackButton
 
 class LeftHandLayout(BaseLayout):
 
@@ -14,11 +14,18 @@ class LeftHandLayout(BaseLayout):
         super().__init__(app)
         self.screen = app.screen
         self.camera = app.camera
+
+        self.background_image = pygame.image.load("src/app/ui/fondo.png").convert_alpha()
+
+        self.background_image = pygame.transform.scale(self.background_image, 
+                                                         (self.screen.get_width(), 
+                                                          self.screen.get_height()))
         
         # Creamos cada seccion por separado
+        self.back_button = BackButton(app, "main")
         self.title_section = TitleSection(self.screen)
         self.instructions_section = InstructionSection(self.screen)
-        self.camera_section = CameraSection(self.screen, self.camera)
+        self.camera_section = CameraSection(self.screen, self.camera, 375, 175, 15, 15)
         self.action_section = ActionSection(self.screen, self.camera)
         self.button_section = ButtonSection(self.screen, self.camera, self.action_section)
 
@@ -28,6 +35,10 @@ class LeftHandLayout(BaseLayout):
             if event.type == pygame.QUIT:
                 return False
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+
+                if self.back_button.handle_click(event.pos):
+                    continue
+
                 self.button_section.handle_click(event.pos)
         return True
     
@@ -38,6 +49,7 @@ class LeftHandLayout(BaseLayout):
 
         self.action_section.update()
 
+        self.back_button.draw((0,0))
         title_section_rect = self.title_section.draw_title_section((0,0), "Visualizacion solo mano izquierda")
         instructions_rect = self.instructions_section.draw_instructions_section((0, title_section_rect.height))
         camera_one_rect = self.camera_section.draw_camera((instructions_rect.width,title_section_rect.height))
