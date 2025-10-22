@@ -3,12 +3,11 @@ import os
 from src.app.config import AppConfig, Colors
 
 class ButtonSection: 
-    def __init__(self, screen, camera, action_section):
+    def __init__(self, screen, recording_strategy):
         self.screen = screen
-        self.camera = camera
         self.font = pygame.font.Font(None, 18)
         self.buttons_rect = []
-        self.action_section = action_section #Referenciamos al otro section
+        self.recording_strategy = recording_strategy
 
     def draw_buttons(self, num_buttons, button_section_rect):
         current_button_rects = []
@@ -58,9 +57,12 @@ class ButtonSection:
         print("Botones activos:", len(self.buttons_rect))
         for i,button in enumerate(self.buttons_rect):
             if button.collidepoint(pos):
-                self.action_section.start_action_sequence()
+                gesture = AppConfig.GESTURE_FOLDERS[i]
 
-                folder_path = os.path.join(AppConfig.DATA_FOLDER, AppConfig.GESTURE_FOLDERS[i])
-                self.camera.start_recording(6, folder_path, AppConfig.GESTURE_FOLDERS[i])
+                #Si Posee ese atritunto y esta prendido, lo apago
+                if hasattr(self.recording_strategy, "is_recording") and self.recording_strategy.is_recording:
+                    self.recording_strategy.stop()
+                else:
+                    self.recording_strategy.start(gesture)
                 return True
         return False
