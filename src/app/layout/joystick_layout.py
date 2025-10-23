@@ -3,11 +3,11 @@ from src.app.config import Colors
 from src.app.ui.title_section import TitleSection
 from src.app.ui.instruction_section import InstructionSection
 from src.app.ui.camera_section import CameraSection
-from src.app.ui.button_section import ButtonSection
+from src.app.ui.buttons.button_section_for_hands import ButtonSectionForHands
 from src.app.ui.action_section import ActionSection
 from src.app.layout.base_layout import BaseLayout
 from src.app.ui.back_button import BackButton
-from src.utils.input_manager import EventRecorder
+from src.utils.event_recorder import EventRecorder
 from src.utils.recorder.indefinite_recording import IndefiniteRecording
 
 

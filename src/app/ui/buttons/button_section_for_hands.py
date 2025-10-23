@@ -1,13 +1,12 @@
 import pygame
 import os
 from src.app.config import AppConfig, Colors
+from .button_base import ButtonSection
 
-class ButtonSection: 
+
+class ButtonSectionForHands(ButtonSection): 
     def __init__(self, screen, recording_strategy):
-        self.screen = screen
-        self.font = pygame.font.Font(None, 18)
-        self.buttons_rect = []
-        self.recording_strategy = recording_strategy
+        super().__init__(screen, recording_strategy)
 
     def draw_buttons(self, num_buttons, button_section_rect):
         current_button_rects = []
@@ -42,27 +41,13 @@ class ButtonSection:
 
         self.buttons_rect = current_button_rects
 
+    def get_button_count(self):
+        return len(AppConfig.GESTURE_FOLDERS)
+    
+    def get_action_for_button(self, button_index):
+        return AppConfig.GESTURE_FOLDERS[button_index]
 
-    def draw_button_section(self, position):
-        button_section_width = self.screen.get_width()  
-        button_section_height = 100  
-        button_section_x, button_section_y = position
+    def get_button_text(self, index):
+        key_name = self.get_key_name_for_button(index)
+        return f"{AppConfig.GESTURE_NAMES[index]} ({key_name})"
 
-        #Creamos un frame/rectangulo para guardar el contenido #(x,y,width,height)
-        button_section_rect = pygame.Rect(button_section_x, button_section_y, button_section_width, button_section_height)  
-        
-        self.draw_buttons(len(AppConfig.GESTURE_FOLDERS), button_section_rect)
-
-    def handle_click(self, pos):
-        print("Botones activos:", len(self.buttons_rect))
-        for i,button in enumerate(self.buttons_rect):
-            if button.collidepoint(pos):
-                gesture = AppConfig.GESTURE_FOLDERS[i]
-
-                #Si Posee ese atritunto y esta prendido, lo apago
-                if hasattr(self.recording_strategy, "is_recording") and self.recording_strategy.is_recording:
-                    self.recording_strategy.stop()
-                else:
-                    self.recording_strategy.start(gesture)
-                return True
-        return False
