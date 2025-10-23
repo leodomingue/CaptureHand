@@ -14,7 +14,7 @@ class MainLayout(BaseLayout):
         button_height = 80
         padding = 30
 
-        total_height = (button_height * 3) + (padding * 2)
+        total_height = (button_height * 4) + (padding * 2)
         start_y = (screen_height - total_height) // 2
 
         pos_x_center = (screen_width - button_width) // 2
@@ -22,7 +22,8 @@ class MainLayout(BaseLayout):
         self.buttons = {
         "right": pygame.Rect(pos_x_center, start_y, button_width, button_height),
         "left": pygame.Rect(pos_x_center, start_y + button_height + padding, button_width, button_height),
-        "exit": pygame.Rect(pos_x_center, start_y + (button_height + padding) * 2, button_width, button_height)
+        "joystick": pygame.Rect(pos_x_center, start_y + (button_height + padding) * 2, button_width, button_height),
+        "exit": pygame.Rect(pos_x_center, start_y + (button_height + padding) * 3, button_width, button_height)
         }
 
     def handle_events(self, events):
@@ -35,6 +36,8 @@ class MainLayout(BaseLayout):
                     self.app.change_layout("right_hand")
                 elif self.buttons["left"].collidepoint(x, y):
                     self.app.change_layout("left_hand")
+                elif self.buttons["joystick"].collidepoint(x, y):
+                    self.app.change_layout("joystick")
                 elif self.buttons["exit"].collidepoint(x, y):
                     return False
         return True
@@ -43,6 +46,7 @@ class MainLayout(BaseLayout):
         self.app.screen.fill((0, 0, 0))
         self.draw_button(self.buttons["right"], "Mano Derecha", (70, 130, 250))
         self.draw_button(self.buttons["left"], "Mano Izquierda", (70, 250, 130))
+        self.draw_button(self.buttons["joystick"], "Joystick", (70, 250, 130))
         self.draw_button(self.buttons["exit"], "Salir", (250, 70, 70))
 
     def draw_button(self, rect, text, color):
