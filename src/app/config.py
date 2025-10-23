@@ -16,6 +16,8 @@ class AppConfig:
     BUTTON_COLORS = ["red", "green", "yellow", "blue", "purple"]
     GESTURE_NAMES = ["Pulgar-Indice", "Pulgar-Medio", "Pulgar-Anular", "Pulgar-Meñique", "No Accion"]
 
+    JOYSTICK_ACTIONS = ["Tecla X", "Tecla O", "Tecla ■", "Tecla ▲"]
+
     BASE_GESTURE_PATH = "gesture_data"
 
     def ensure_gesture_folders_exist():
