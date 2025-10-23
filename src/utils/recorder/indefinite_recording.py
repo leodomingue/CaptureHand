@@ -1,4 +1,4 @@
-from src.utils.input_manager import EventRecorder
+from src.utils.event_recorder import EventRecorder
 from .recording_strategy import RecordingStrategy
 import os
 

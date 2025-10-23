@@ -3,7 +3,7 @@ from src.app.config import Colors
 from src.app.ui.title_section import TitleSection
 from src.app.ui.instruction_section import InstructionSection
 from src.app.ui.camera_section import CameraSection
-from src.app.ui.button_section import ButtonSection
+from src.app.ui.buttons.button_section_for_hands import ButtonSectionForHands
 from src.app.ui.action_section import ActionSection
 from src.app.layout.base_layout import BaseLayout
 from src.app.ui.back_button import BackButton
@@ -28,7 +28,7 @@ class RightHandLayout(BaseLayout):
         self.instructions_section = InstructionSection(self.screen)
         self.camera_section = CameraSection(self.screen, self.camera, 375, 175, 15, 15)
         self.action_section = ActionSection(self.screen, self.camera)
-        self.button_section = ButtonSection(self.screen, FixedRecording(camera=self.camera, action_section=self.action_section))
+        self.button_section = ButtonSectionForHands(self.screen, FixedRecording(camera=self.camera, action_section=self.action_section))
 
 
     def handle_events(self,events): 
