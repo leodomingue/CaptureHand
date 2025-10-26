@@ -9,39 +9,36 @@ class IndefiniteRecording:
         self.is_recording = False
         self.current_gesture = None
         self.clip_start_time = None
-        self.clip_duration = 0
+        self.max_total_duration = None
 
     def start(self, gesture_name):
         print(f"Iniciando grabación para estado: {gesture_name}")
         self.current_gesture = gesture_name
-        self.is_recording = False 
-        self.clip_start_time = None
+        self.is_recording = True 
+        self.clip_start_time = time.time()
+        self.max_total_duration = random.uniform(2, 3)
+        if self.recorder:
+            self.recorder.start_state(self.current_gesture)
 
     def stop(self):
         if self.is_recording and self.recorder:
             print(f"Terminando clip para: {self.current_gesture}")
             self.recorder.end_state()
-            self.is_recording = False
         elif self.recorder:
             print(f"Deteniendo estrategia (sin clip activo)")
 
+        self.is_recording = False
+        self.current_gesture = None
+
     def update(self):
-        #EN CADA FRAME SE LLAMA A ESTA FUNCION
-        if self.current_gesture is None or self.recorder is None:
+        if not self.is_recording or not self.recorder:
             return
         
-        now = time.time()
+        elapsed = time.time() - self.clip_start_time
+        if elapsed >= self.max_total_duration:
+            print(f"Tiempo máximo alcanzado ({self.max_total_duration}s). Deteniendo grabación.")
+            self.stop()
+            return False
         
-        #sI NO HAY CLIP, EMPEZAMOS UNO
-        if not self.is_recording:
-            self.clip_start_time = now
-            self.clip_duration = random.uniform(2, 3)
-            print(f" Iniciando nuevo clip de {self.clip_duration:.2f}s para: '{self.current_gesture}'")
-            self.recorder.start_state(self.current_gesture)
-            self.is_recording = True
-        
-        # Si se paso el clip, termianmos
-        elif now - self.clip_start_time >= self.clip_duration:
-            print(f"Clip completado después de {self.clip_duration:.2f}s para: '{self.current_gesture}'")
-            self.recorder.end_state()
-            self.is_recording = False 
+        #sI SIGUE GRABANDO 
+        return True

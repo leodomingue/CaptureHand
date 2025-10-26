@@ -1,4 +1,5 @@
 import pygame
+import time
 from src.app.config import Colors
 from src.app.ui.title_section import TitleSection
 from src.app.ui.instruction_section import InstructionSection
@@ -47,6 +48,10 @@ class JoystickLayout(BaseLayout):
         self.action_section = ActionSection(self.screen, self.camera)
         self.button_section = ButtonSectionForJoystick(self.screen, recording_strategy=IndefiniteRecording(self.camera))
 
+        self.is_recording = None
+        self.current_clip_type = None
+        self.message = '-'
+
     def handle_events(self, events):
         #Manejamos cada evento de esta ventana
         
@@ -72,17 +77,13 @@ class JoystickLayout(BaseLayout):
         def handle_mouse_click(event):
             if event.button == 1:
                 button_name = self.button_section.handle_click(event.pos)
-                if not button_name:
-                    return
-            
-            button_name = self.button_section.handle_click(event.pos)
-            if not button_name:
-                return
-            #Si se toca un boton de la pantalla comenzamos a grabar con el EventRecorder
-            start_new_recorder(button_name)
+                if button_name:
+
+                    #Si se toca un boton de la pantalla comenzamos a grabar con el EventRecorder
+                    start_new_recorder(button_name)
 
         def start_new_recorder(button_name):
-            #inicializamo un eventRecorder y que empiece a grabar indefinidamente
+            #inicializamos un eventRecorder y que empiece a grabar indefinidamente
             if self.recorder:
                 print(f"Terminando recorder anterior para botón {self.active_button}")
                 self._cleanup_recording()
@@ -102,6 +103,7 @@ class JoystickLayout(BaseLayout):
             
             #inciamos nuevo clip
             self.button_section.recording_strategy.start(f"{key_name}_soltado")
+            self.current_clip_type = "soltado"
 
 
         def handle_key_press(event):
@@ -126,6 +128,8 @@ class JoystickLayout(BaseLayout):
             # Iniciamos nuevo clip
             self.button_section.recording_strategy.start(f"{key_name}_presionado")
             self.is_recording_clips = True
+            self.current_clip_type = "presionado"
+
 
         def handle_key_release(event):
             #Si se deja de presionar la tecla
@@ -136,14 +140,6 @@ class JoystickLayout(BaseLayout):
             
             switch_to_released_clip(key_name)
 
-
-        def switch_to_released_clip(key_name):
-            #Cambia de clip presionado a soltado
-            # terminamos el clip anterior
-            self.button_section.recording_strategy.stop()
-            
-            #Empezamos a grabar clips con el nuevo estado
-            self.button_section.recording_strategy.start(f"{key_name}_soltado")
 
 
         for event in events:
@@ -195,11 +191,51 @@ class JoystickLayout(BaseLayout):
             
             # y decidimso si se sigue grabando o tenemos que parar (nos fijamos el tiempo)
             if self.is_recording_clips and self.button_section.recording_strategy is not None:
-                self.button_section.recording_strategy.update()
+                self.is_recording = self.button_section.recording_strategy.update()
+
+                if self.is_recording:
+                    if self.current_clip_type == "presionado":
+                        self.message = f"Grabando clip: mantiene presionada la tecla {self.active_button}"
+                    elif self.current_clip_type == "soltado":
+                        self.message = f"Grabando clip: soltando la tecla {self.active_button}"
+
+                    # Reinicimiaos temporizador
+                    self.last_clip_end_time = None
+
+
+                #--------------Refactorizar------------
+                #Si el clip terminó
+                else:
+                    current_time = time.time()
+
+                    # Si el clip acaba de terminar, guardamos el momento de fin
+                    if self.last_clip_end_time is None:
+                        self.last_clip_end_time = current_time
+
+                    elapsed_since_end = current_time - self.last_clip_end_time
+
+                    # Si aún no pasó 1 segundo desde el final, mantenemos el mensaje anterior
+                    if elapsed_since_end < 1.0:
+                        if self.current_clip_type == "presionado":
+                            self.message = f"Grabando clip: mantené presionada la tecla {self.active_button}"
+                        elif self.current_clip_type == "soltado":
+                            self.message = f"Grabando clip: tocá pero no presiones la tecla {self.active_button}"
+                    else:
+                        # Luego del 1 segundo, mostramos el mensaje de siguiente acción
+                        if self.current_clip_type == "presionado":
+                            self.message = f"Finalizado el clip de presión {self.active_button}. Soltá la tecla."
+                        elif self.current_clip_type == "soltado":
+                            self.message = f"Finalizado el clip de soltar {self.active_button}. Toca la tecla {self.active_button}."
+                        else:
+                            self.message = "-"
+            else:
+                self.message = "-"
+
+                   
 
 
         if self.recorder:
-            status_text = f"EventRecorder activo - Botón: {self.active_button} - Grabando clips: {self.is_recording_clips}"
+            status_text = self.message
             font = pygame.font.Font(None, 30)
             text_surface = font.render(status_text, True, (255, 255, 255))
             self.screen.blit(text_surface, (120, self.screen.get_height() - 130))
