@@ -1,6 +1,5 @@
 import pygame
 import sys
-from src.camera.camera import Camera
 from src.app.config import AppConfig
 from src.app.layout.layout_factory import LayoutFactory
 
@@ -12,11 +11,24 @@ class GestureRecorderApp:
 
         AppConfig.ensure_gesture_folders_exist()
 
-        self.camera = Camera()
-        self.camera.initialize_camera()
+        self.local_camera = None
+        self.remote_camera = None
+        self.active_cameras = []
 
         #Si alguien quiere, puede crear su layout, agregarlo al facotry ya estaria
         self.current_layout = LayoutFactory.create_layout("main", self)
+
+    def activate_camera(self, camera_type):
+        camera = None
+        
+        if camera_type == "local" and self.local_camera:
+            camera = self.local_camera
+        elif camera_type == "remote" and self.remote_camera:
+            camera = self.remote_camera
+        
+        if camera and camera not in self.active_cameras:
+            self.active_cameras.append(camera)
+            print(f"Cámara {camera_type} activada")
 
     def change_layout(self, name):
         self.current_layout = LayoutFactory.create_layout(name, self)

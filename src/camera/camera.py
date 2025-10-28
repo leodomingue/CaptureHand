@@ -1,57 +1,25 @@
-import cv2
-import time
-import os
-import threading
 
-class Camera:
+import time
+
+from abc import ABC, abstractmethod
+
+class Camera(ABC):
 
     def __init__(self):
         #Index donde esta ubcada la camara por defecto
-        self.camera_index = 0 #Ojo si tenes 2 camaras conectadas (A futuro veo si añadimos via bluetooth)
+        self.camera_index = 0 
         self.cap = None
         self.frames = []
         self.is_recording = False
         self.recording_start_time = 0
-        self.real_fps = 30.0 
+        self.real_fps = 20.0 
         self.fps_calculated = False
 
 
+
+    @abstractmethod
     def initialize_camera(self):
-        self.cap = cv2.VideoCapture(self.camera_index) #Establece una conexion cone la camara 
-        
-        if not self.cap.isOpened():
-            raise Exception("No se pudo abrir la cámara")
-        
-        self.calculate_real_fps()
-    
-        return True
-    
-    # Precalculamos los fps reales para saber cuanto es el trackng de los fps por segundo
-    def calculate_real_fps(self):
-        # Se toman muestran al inicializar la camara por 60 frames
-        num_frames_to_test = 60
-        frames = []
-        start_time = time.time()
-        
-        for i in range(num_frames_to_test):
-            ret, frame = self.cap.read()
-            if ret:
-                frames.append(frame)
-            else:
-                break
-            time.sleep(0.001)
-        
-        end_time = time.time()
-        actual_duration = end_time - start_time
-        
-
-        self.real_fps = len(frames) / actual_duration
-        self.fps_calculated = True
-        print(f"FPS reales calculados: {self.real_fps:.2f}")
-
-        
-        # Se limpia la memoria
-        frames.clear()
+        pass
 
     
     def get_preview_frame(self):
@@ -66,53 +34,3 @@ class Camera:
             return time.time() - self.recording_start_time
         return 0
     
-    def start_recording(self, duration, folder_path, filename_prefix):
-        if self.is_recording:
-            print("Ya se está grabando.")
-            return
-
-        self.is_recording = True
-        self.recording_start_time = time.time()
-        print(f"Grabando durante {duration} segundos con FPS: {self.real_fps:.2f}...")
-
-        def record_loop():
-
-            # Preparamos la ruta con el archivo a guardar
-            existing_videos = [f for f in os.listdir(folder_path) 
-                            if f.startswith(filename_prefix) and f.endswith('.mp4')]
-            next_number = len(existing_videos) + 1
-            filename = f"{filename_prefix}_{next_number}.mp4"
-            video_path = os.path.join(folder_path, filename)
-
-            #vemos las dimensiones y vemos si se graba correctamente
-            ret, first_frame = self.cap.read()
-            if not ret:
-                self.is_recording = False
-                return
-
-            height, width = first_frame.shape[:2]
-
-            #El programa para grabar
-            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            video_writer = cv2.VideoWriter(video_path, fourcc, self.real_fps, (width, height))
-
-            #Calculamos la cantidad de frames a grabar según los FPS reales y la duración
-            total_frames_to_record = int(round(duration * self.real_fps))
-            frame_count = 0
-
-            while self.is_recording and frame_count < total_frames_to_record:
-                ret, frame = self.cap.read()
-                if ret:
-                    video_writer.write(frame)
-                    frame_count += 1
-                else:
-                    break
-
-            #Liberamos los recursos
-            video_writer.release()
-            self.is_recording = False
-
-            print(f"Grabación finalizada: {filename}")
-
-        #Lo hacemos en otro hilo
-        threading.Thread(target=record_loop, daemon=True).start()
