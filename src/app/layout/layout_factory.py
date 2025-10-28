@@ -1,7 +1,9 @@
+from src.app.layout.main_layout import MainLayout
 from src.app.layout.right_hand_layout import RightHandLayout
 from src.app.layout.left_hand_layout import LeftHandLayout
-from src.app.layout.main_layout import MainLayout
 from src.app.layout.joystick_layout import JoystickLayout
+
+
 
 class LayoutFactory:
     @staticmethod #permite no recibir parametros, pertenece a la clase y no a una instancia

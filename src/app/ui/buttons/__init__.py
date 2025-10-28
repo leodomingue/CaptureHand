@@ -1,4 +1,4 @@
 from .button_section_for_hands import ButtonSectionForHands
 from .button_section_for_joystick import ButtonSectionForJoystick
 
-__all__ = ["ButtonSection", "ButtonSectionForJoystick"]
+__all__ = ["ButtonSectionForHands", "ButtonSectionForJoystick"]

@@ -1,15 +1,10 @@
 import pygame
 import time
-from src.app.config import Colors
-from src.app.ui.title_section import TitleSection
-from src.app.ui.instruction_section import InstructionSection
-from src.app.ui.camera_section import CameraSection
-from src.app.ui.buttons.button_section_for_joystick import ButtonSectionForJoystick
-from src.app.ui.action_section import ActionSection
+from src.app.ui import (BackButton, TitleSection, InstructionSection, CameraSection, ActionSection)
 from src.app.layout.base_layout import BaseLayout
-from src.app.ui.back_button import BackButton
-from src.utils.event_recorder import EventRecorder
-from src.utils.recorder.indefinite_recording import IndefiniteRecording
+from src.app.ui.buttons import ButtonSectionForJoystick
+from src.utils import EventRecorder
+from src.utils.recorder import IndefiniteRecording
 
 
 class JoystickLayout(BaseLayout):
@@ -18,8 +13,10 @@ class JoystickLayout(BaseLayout):
         super().__init__(app)
         
         self.screen = app.screen
-        self.camera = app.camera
-        self.recorder = None
+        self.local_camera = app.local_camera
+        self.remote_camera = app.remote_camera
+        self.local_recorder = None
+        self.remote_recorder = None
 
         self.background_image = pygame.image.load("src/app/ui/fondo.png").convert_alpha()
         self.background_image = pygame.transform.scale(self.background_image, 
@@ -44,13 +41,38 @@ class JoystickLayout(BaseLayout):
         self.back_button = BackButton(app, "main")
         self.title_section = TitleSection(self.screen)
         self.instructions_section = InstructionSection(self.screen)
-        self.camera_section = CameraSection(self.screen, self.camera, 375, 175, 15, 15)
-        self.action_section = ActionSection(self.screen, self.camera)
-        self.button_section = ButtonSectionForJoystick(self.screen, recording_strategy=IndefiniteRecording(self.camera))
+        self.local_camera_section = CameraSection(self.screen, self.local_camera, 375, 175, 15, 15)
+        self.remote_camera_section = CameraSection(self.screen, self.remote_camera, 375, 175, 15, 15)
+        self.local_action_section = ActionSection(self.screen, self.local_camera)
+        self.remote_action_section = ActionSection(self.screen, self.remote_camera)
+
+        recorders = []
+        if self.local_camera:
+            self.local_recorder = EventRecorder(
+                pre_buffer_seconds=4,
+                fps=int(self.local_camera.real_fps),
+                camera_type="local"
+            )
+            recorders.append(self.local_recorder)
+
+        if self.remote_camera:
+            self.remote_recorder = EventRecorder(
+                pre_buffer_seconds=4,
+                fps=int(self.remote_camera.real_fps),
+                camera_type="remote"
+            )
+            recorders.append(self.remote_recorder)
+
+        self.button_section = ButtonSectionForJoystick(
+            self.screen, 
+            recording_strategy=IndefiniteRecording(recorders)
+        )
+        
 
         self.is_recording = None
         self.current_clip_type = None
         self.message = '-'
+        self.last_clip_end_time = None
 
     def handle_events(self, events):
         #Manejamos cada evento de esta ventana
@@ -83,18 +105,46 @@ class JoystickLayout(BaseLayout):
                     start_new_recorder(button_name)
 
         def start_new_recorder(button_name):
-            #inicializamos un eventRecorder y que empiece a grabar indefinidamente
-            if self.recorder:
-                print(f"Terminando recorder anterior para botón {self.active_button}")
-                self._cleanup_recording()
-                    
-            # Inicializamos nuevo EventRecorder
-            print(f"Inicializando EventRecorder para botón {button_name}")
-            self.recorder = EventRecorder(pre_buffer_seconds=4, fps=int(self.camera.real_fps))
+            # Limpiamos recorders anteriores si existen
+            if self.local_recorder:
+                print(f"Terminando recorder local anterior para botón {self.active_button}")
+                self.local_recorder.end_state()
+                self.local_recorder = None
+            if self.remote_recorder:
+                print(f"Terminando recorder remota anterior para botón {self.active_button}")
+                self.remote_recorder.end_state()
+                self.remote_recorder = None
+
             self.active_button = button_name
             self.is_recording_clips = False
-            self.button_section.recording_strategy.recorder = self.recorder
-            print(f"EventRecorder listo. Presiona la tecla '{button_name}' para empezar a grabar clips")
+
+            # Inicializamos nuevos EventRecorder diferenciando local y remota
+            recorders = []
+            if self.local_camera:
+                self.local_recorder = EventRecorder(
+                    pre_buffer_seconds=4,
+                    fps=int(self.local_camera.real_fps),
+                    camera_type="local"
+                )
+                recorders.append(self.local_recorder)
+            if self.remote_camera:
+                self.remote_recorder = EventRecorder(
+                    pre_buffer_seconds=4,
+                    fps=int(self.remote_camera.real_fps),
+                    camera_type="remote"
+                )
+                recorders.append(self.remote_recorder)
+            
+
+            self.button_section.recording_strategy = IndefiniteRecording(recorders)
+
+
+            print(f"EventRecorder inicializado para botón '{button_name}'.")
+            if self.local_recorder:
+                print("Recorder local listo.")
+            if self.remote_recorder:
+                print("Recorder remota listo.")
+            print(f"Presiona la tecla '{button_name}' para empezar a grabar clips")
 
         def switch_to_released_clip(key_name):
             #Cambiamos estado de presioando a soltado
@@ -111,7 +161,7 @@ class JoystickLayout(BaseLayout):
             key_name = self._get_key_name(event.key)
             print(f"Tecla presionada: '{key_name}', Botón activo: '{self.active_button}'")
             
-            if not self.recorder:
+            if not (self.local_recorder or self.remote_recorder):
                 return
             
             if key_name == self.active_button:
@@ -135,7 +185,7 @@ class JoystickLayout(BaseLayout):
             #Si se deja de presionar la tecla
             key_name = self._get_key_name(event.key)
 
-            if not (self.recorder and (key_name == self.active_button) and self.is_recording_clips):
+            if not ((self.local_recorder or self.remote_recorder) and (key_name == self.active_button) and self.is_recording_clips):
                 return
             
             switch_to_released_clip(key_name)
@@ -162,9 +212,12 @@ class JoystickLayout(BaseLayout):
         if self.button_section.recording_strategy:
             self.button_section.recording_strategy.stop()
         
-        if self.recorder:
-            self.recorder.end_state()
-            self.recorder = None
+        if self.local_recorder:
+            self.local_recorder.end_state()
+            self.local_recorder = None
+        if self.remote_recorder:
+            self.remote_recorder.end_state()
+            self.remote_recorder = None
         
         self.active_button = None
         self.is_recording_clips = False
@@ -172,70 +225,96 @@ class JoystickLayout(BaseLayout):
 
     def draw(self):
         self.screen.blit(self.background_image, (0, 0))
-        self.action_section.update()
+
+        if self.local_camera is None and self.remote_camera is None:
+            self.draw_no_camera_message()
+            self.back_button.draw((0, 0))
+            pygame.display.flip()
+            return
+        
+        if self.local_camera:
+            self.local_action_section.update()
+        if self.remote_camera:
+            self.remote_action_section.update()
 
         self.back_button.draw((0,0))
         title_section_rect = self.title_section.draw_title_section((0,0), "Visualizacion Joystick")
         instructions_rect = self.instructions_section.draw_instructions_section((0, title_section_rect.height))
-        camera_one_rect = self.camera_section.draw_camera((instructions_rect.width,title_section_rect.height))
-        camera_two_rect = self.camera_section.draw_camera((instructions_rect.width,camera_one_rect.bottom+10))
-        self.action_section.draw_action_section((0,instructions_rect.height))
+        camera_one_rect = self.local_camera_section.draw_camera((instructions_rect.width,title_section_rect.height))
+        camera_two_rect = self.remote_camera_section.draw_camera((instructions_rect.width,camera_one_rect.bottom+10))
         self.button_section.draw_button_section((0,self.screen.get_height()-100))
 
         # Obtenemos el frame de la camra de la pantalla
-        frame = self.camera.get_preview_frame()
-        
-        #Agregamos los frames a la grabadora (todos los frames) y lo colocamos en el buffer
-        if frame is not None and self.recorder is not None:
-            self.recorder.add_frame(frame)
+        if self.local_camera and self.local_recorder:
+            frame_local = self.local_camera.get_preview_frame()
+            if frame_local is not None:
+                self.local_recorder.add_frame(frame_local)
+
+        if self.remote_camera and self.remote_recorder:
+            frame_remote = self.remote_camera.get_preview_frame()
+            if frame_remote is not None:
+                self.remote_recorder.add_frame(frame_remote)
+
+        if self.is_recording_clips:
+            if self.button_section.recording_strategy:
+                still_recording = self.button_section.recording_strategy.update()
+                self.is_recording = still_recording
             
             # y decidimso si se sigue grabando o tenemos que parar (nos fijamos el tiempo)
-            if self.is_recording_clips and self.button_section.recording_strategy is not None:
-                self.is_recording = self.button_section.recording_strategy.update()
-
-                if self.is_recording:
-                    if self.current_clip_type == "presionado":
-                        self.message = f"Grabando clip: mantiene presionada la tecla {self.active_button}"
-                    elif self.current_clip_type == "soltado":
-                        self.message = f"Grabando clip: soltando la tecla {self.active_button}"
-
-                    # Reinicimiaos temporizador
-                    self.last_clip_end_time = None
 
 
-                #--------------Refactorizar------------
-                #Si el clip terminó
-                else:
-                    current_time = time.time()
+            if self.is_recording:
+                if self.current_clip_type == "presionado":
+                    self.message = f"Grabando clip: mantiene presionada la tecla {self.active_button}"
+                elif self.current_clip_type == "soltado":
+                    self.message = f"Grabando clip: soltando la tecla {self.active_button}"
 
-                    # Si el clip acaba de terminar, guardamos el momento de fin
-                    if self.last_clip_end_time is None:
-                        self.last_clip_end_time = current_time
+                # Reinicimiaos temporizador
+                self.last_clip_end_time = None
 
-                    elapsed_since_end = current_time - self.last_clip_end_time
 
-                    # Si aún no pasó 1 segundo desde el final, mantenemos el mensaje anterior
-                    if elapsed_since_end < 1.0:
-                        if self.current_clip_type == "presionado":
-                            self.message = f"Grabando clip: mantené presionada la tecla {self.active_button}"
-                        elif self.current_clip_type == "soltado":
-                            self.message = f"Grabando clip: tocá pero no presiones la tecla {self.active_button}"
-                    else:
-                        # Luego del 1 segundo, mostramos el mensaje de siguiente acción
-                        if self.current_clip_type == "presionado":
-                            self.message = f"Finalizado el clip de presión {self.active_button}. Soltá la tecla."
-                        elif self.current_clip_type == "soltado":
-                            self.message = f"Finalizado el clip de soltar {self.active_button}. Toca la tecla {self.active_button}."
-                        else:
-                            self.message = "-"
+            #--------------Refactorizar------------
+            #Si el clip terminó
             else:
-                self.message = "-"
+                current_time = time.time()
+
+                # Si el clip acaba de terminar, guardamos el momento de fin
+                if self.last_clip_end_time is None:
+                    self.last_clip_end_time = current_time
+
+                elapsed_since_end = current_time - self.last_clip_end_time
+
+                # Si aún no pasó 1 segundo desde el final, mantenemos el mensaje anterior
+                if elapsed_since_end < 1.0:
+                    if self.current_clip_type == "presionado":
+                        self.message = f"Grabando clip: mantené presionada la tecla {self.active_button}"
+                    elif self.current_clip_type == "soltado":
+                        self.message = f"Grabando clip: tocá pero no presiones la tecla {self.active_button}"
+                else:
+                    # Luego del 1 segundo, mostramos el mensaje de siguiente acción
+                    if self.current_clip_type == "presionado":
+                        self.message = f"Finalizado el clip de presión {self.active_button}. Soltá la tecla."
+                    elif self.current_clip_type == "soltado":
+                        self.message = f"Finalizado el clip de soltar {self.active_button}. Toca la tecla {self.active_button}."
+                    else:
+                        self.message = "-"
+        else:
+            self.message = "-"
 
                    
 
 
-        if self.recorder:
+        if self.local_recorder or self.remote_recorder:
             status_text = self.message
             font = pygame.font.Font(None, 30)
             text_surface = font.render(status_text, True, (255, 255, 255))
             self.screen.blit(text_surface, (120, self.screen.get_height() - 130))
+
+
+
+    def draw_no_camera_message(self):
+        font = pygame.font.SysFont("Arial", 28)
+        msg = "No hay cámara Local y/o remota inicializada. Volvé al menú principal."
+        text_surface = font.render(msg, True, (255, 255, 255))
+        text_rect = text_surface.get_rect(center=self.screen.get_rect().center)
+        self.screen.blit(text_surface, text_rect)

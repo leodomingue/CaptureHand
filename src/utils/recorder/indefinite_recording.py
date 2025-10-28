@@ -3,9 +3,8 @@ import time
 
 
 class IndefiniteRecording:
-    def __init__(self, camera):
-        self.camera = camera
-        self.recorder = None
+    def __init__(self, cameras):
+        self.recorders = cameras
         self.is_recording = False
         self.current_gesture = None
         self.clip_start_time = None
@@ -17,22 +16,25 @@ class IndefiniteRecording:
         self.is_recording = True 
         self.clip_start_time = time.time()
         self.max_total_duration = random.uniform(2, 3)
-        if self.recorder:
-            self.recorder.start_state(self.current_gesture)
+        for recorder in self.recorders:
+            if recorder:
+                recorder.start_state(self.current_gesture)
 
     def stop(self):
-        if self.is_recording and self.recorder:
-            print(f"Terminando clip para: {self.current_gesture}")
-            self.recorder.end_state()
-        elif self.recorder:
-            print(f"Deteniendo estrategia (sin clip activo)")
+        if self.is_recording:
+            for recorder in self.recorders:
+                if recorder:
+                    recorder.end_state()
+                    print(f"Terminando clip para: {self.current_gesture}")
 
         self.is_recording = False
         self.current_gesture = None
+        self.clip_start_time = None
+        self.max_total_duration = None
 
     def update(self):
-        if not self.is_recording or not self.recorder:
-            return
+        if not self.is_recording or not self.recorders:
+            return False
         
         elapsed = time.time() - self.clip_start_time
         if elapsed >= self.max_total_duration:

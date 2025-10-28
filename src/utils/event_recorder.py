@@ -9,16 +9,17 @@ class EventRecorder:
     # CLASE EXTRA QUE SIRVA PARA GESTIONAR EVENTOS DE LOS VIDEOS Y GRABE CONSTANTEMENTE
     # La idea es que esta clase tenga una grabacion constante (buffer) y que cada vez que entre input recuerde ese estado y capture esa aprte del video
     
-    def __init__(self, pre_buffer_seconds=3, fps=30, folder="clips"):
+    def __init__(self, pre_buffer_seconds=3, fps=30, camera_type="local"):
         self.fps = fps
         self.pre_buffer_seconds = pre_buffer_seconds  # Ajustamos cuantos segundos va a tener el buffer
         self.frame_buffer = deque(maxlen=int(pre_buffer_seconds * fps))  # Una cola que siempre mantiene una cantidad contante de frames
         # Por ejemplo Siempre tenga 30 frames, si se pasa a 61 saca el 1er frame y asi..
         self.state = None
         self.state_events = []  # Lista de tuplas: (start_time, end_time, estado)
-        self.folder = folder
+        self.camera_type = camera_type
 
         self.clip_counters = {}
+        self.folder = os.path.join("clips", camera_type)
         os.makedirs(self.folder, exist_ok=True)
 
     def add_frame(self, frame):
@@ -57,6 +58,9 @@ class EventRecorder:
         # de [(1.5, frame1), (1.6, frame2), (1.7, frame3), (1.8, frame4), (1.9, frame5)] pasamos a
         # [frame2, frame3, frame4]
 
+        button_folder = os.path.join(self.folder, state.split("_")[0])
+        os.makedirs(button_folder, exist_ok=True)
+
         num_frames = int(duration * self.fps)
         all_frames_with_timestamps = list(self.frame_buffer)
         
@@ -67,9 +71,7 @@ class EventRecorder:
             return
         
         if state not in self.clip_counters:
-            filename_prefix = f"stick_{state}_"
-            existing_videos = [f for f in os.listdir(self.folder) 
-                            if f.startswith(filename_prefix) and f.endswith('.mp4')]
+            existing_videos = [f for f in os.listdir(button_folder) if f.startswith(f"stick_{state}_") and f.endswith('.mp4')]
             max_number = 0
             for filename in existing_videos:
                 try:
