@@ -36,6 +36,24 @@ class JoystickLayout(BaseLayout):
             pygame.K_KP5: '5', pygame.K_KP6: '6', pygame.K_KP7: '7', pygame.K_KP8: '8',
             pygame.K_KP9: '9', pygame.K_KP0: '0'
         }
+
+        self.joystick_mapping = {
+            0: 'A',      # Botón A (Xbox) / X (PS)
+            1: 'B',      # Botón B (Xbox) / Círculo (PS)
+            2: 'X',      # Botón X (Xbox) / Cuadrado (PS)
+            3: 'Y',      # Botón Y (Xbox) / Triángulo (PS)
+            4: 'LB',     # Botón izquierdo superior
+            5: 'RB',     # Botón derecho superior
+            6: 'Back',   # Botón back/select
+            7: 'Start',  # Botón start
+            8: 'LS',     # Click stick izquierdo
+            9: 'RS',     # Click stick derecho
+        }
+
+
+        self.joystick = None
+        self.init_joystick()
+
         
         # Creamos cada seccion por separado
         self.back_button = BackButton(app, "main")
@@ -74,6 +92,18 @@ class JoystickLayout(BaseLayout):
         self.message = '-'
         self.last_clip_end_time = None
 
+
+    def init_joystick(self):
+        pygame.joystick.init()
+        if pygame.joystick.get_count()> 0:
+            self.joystick = pygame.joystick.Joystick(0)
+            self.joystick.init()
+        else:
+            print("No se encontró ningún joystick")
+            self.joystick = None
+
+    
+
     def handle_events(self, events):
         #Manejamos cada evento de esta ventana
         
@@ -82,8 +112,15 @@ class JoystickLayout(BaseLayout):
             if event.type == pygame.QUIT:
                 return False
             
+            #Eventos con JOystick
+            if event.type == pygame.JOYBUTTONDOWN:
+                handle_joystick_button_press(event)
+            elif event.type == pygame.JOYBUTTONUP:
+                handle_joystick_button_release(event)
+            
+            #Eventos con mouse y teclado
             #Si se realiza un click en la pantalla
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.MOUSEBUTTONDOWN:
                 if self.back_button.handle_click(event.pos):
                     return True
                 handle_mouse_click(event)
@@ -95,12 +132,36 @@ class JoystickLayout(BaseLayout):
                 handle_key_release(event)
             
             return True
+        
+
+        def handle_joystick_button_press(event):
+            if event.button in self.joystick_mapping:
+                button_name = self.joystick_mapping[event.button]
+                print(f"Botón del joystick presionado: '{button_name}' (botón {event.button})")
+
+                if not (self.local_recorder or self.remote_recorder):
+                    print("No hay EventRecorder activo — primero hacé clic en un botón en pantalla.")
+                    return
+                
+                if button_name == self.active_button:
+                    start_pressed_clip(button_name)
+                else:
+                    print(f"Botón '{button_name}' != activo '{self.active_button}' → cancelando grabación.")
+                    self._cleanup_recording()
+
+        def handle_joystick_button_release(event):
+            if event.button in self.joystick_mapping:
+                button_name = self.joystick_mapping[event.button]
+                print(f"Botón del joystick liberado: '{button_name}' (botón {event.button})")
+                
+                if (self.active_button and button_name == self.active_button and self.is_recording_clips):
+                    switch_to_released_clip(button_name)
+
 
         def handle_mouse_click(event):
             if event.button == 1:
                 button_name = self.button_section.handle_click(event.pos)
                 if button_name:
-
                     #Si se toca un boton de la pantalla comenzamos a grabar con el EventRecorder
                     start_new_recorder(button_name)
 
