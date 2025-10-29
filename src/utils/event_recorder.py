@@ -19,8 +19,8 @@ class EventRecorder:
         self.camera_type = camera_type
 
         self.clip_counters = {}
-        self.folder = os.path.join("clips", camera_type)
-        os.makedirs(self.folder, exist_ok=True)
+        self.base_folder = "clips"
+        os.makedirs(self.base_folder, exist_ok=True)
 
     def add_frame(self, frame):
         t = time.time()
@@ -58,7 +58,7 @@ class EventRecorder:
         # de [(1.5, frame1), (1.6, frame2), (1.7, frame3), (1.8, frame4), (1.9, frame5)] pasamos a
         # [frame2, frame3, frame4]
 
-        button_folder = os.path.join(self.folder, state.split("_")[0])
+        button_folder = os.path.join(self.base_folder, state.split("_")[0], self.camera_type)
         os.makedirs(button_folder, exist_ok=True)
 
         num_frames = int(duration * self.fps)
@@ -92,7 +92,7 @@ class EventRecorder:
 
         height, width = frames_to_save[0].shape[:2]
         filename = f"stick_{state}_{next_number}.mp4"
-        path = os.path.join(self.folder, filename)
+        path = os.path.join(button_folder, filename)
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         out = cv2.VideoWriter(path, fourcc, self.fps, (width, height))
         
