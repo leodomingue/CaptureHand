@@ -21,6 +21,7 @@ class EventRecorder:
         self.clip_counters = {}
         self.base_folder = "clips"
         os.makedirs(self.base_folder, exist_ok=True)
+        self._initialize_clip_counters()
 
     def add_frame(self, frame):
         t = time.time()
@@ -101,3 +102,27 @@ class EventRecorder:
         
         out.release()
         print(f"Clip guardado: {filename}")
+
+
+    def _initialize_clip_counters(self):
+        for button_name in os.listdir(self.base_folder):
+            button_path = os.path.join(self.base_folder, button_name)
+            if not os.path.isdir(button_path):
+                continue
+
+            for camera_type in os.listdir(button_path):
+                camera_path = os.path.join(button_path, camera_type)
+                if not os.path.isdir(camera_path):
+                    continue
+
+                for filename in os.listdir(camera_path):
+                    if filename.startswith("stick_") and filename.endswith(".mp4"):
+                        try:
+                            parts = filename.replace("stick_", "").replace(".mp4", "").split("_")
+                            if len(parts) >= 2:
+                                state = parts[0] + "_" + parts[1] 
+                                num = int(parts[2]) if len(parts) == 3 else 0
+                                current = self.clip_counters.get(state, 0)
+                                self.clip_counters[state] = max(current, num)
+                        except Exception:
+                            continue
