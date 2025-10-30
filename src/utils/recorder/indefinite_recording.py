@@ -11,6 +11,10 @@ class IndefiniteRecording:
         self.max_total_duration = None
 
     def start(self, gesture_name):
+        if "_" not in gesture_name:
+            return
+
+
         print(f"Iniciando grabación para estado: {gesture_name}")
         self.current_gesture = gesture_name
         self.is_recording = True 
