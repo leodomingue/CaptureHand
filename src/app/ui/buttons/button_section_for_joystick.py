@@ -23,7 +23,7 @@ class ButtonSectionForJoystick(ButtonSection):
         return 4
 
     def get_button_text(self, index):
-        texts = ["Boton 1", "Boton 2", "Boton 3", "Boton 4"]
+        texts = ["Boton A(XBOX)/X(PS)", "Boton B(XBOX)/O(PS)", "Boton X(XBOX)/■(PS)", "Boton Y(XBOX)/▲(PS)"]
         return texts[index]
 
     def get_action_for_button(self, button_index):

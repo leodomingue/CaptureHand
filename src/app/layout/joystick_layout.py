@@ -50,6 +50,19 @@ class JoystickLayout(BaseLayout):
             9: 'RS',     # Click stick derecho
         }
 
+        self.joystick_to_ui_equivalence = {
+            'A': '1',
+            'B': '2',
+            'X': '3',
+            'Y': '4',
+            'LB': '5',
+            'RB': '6',
+            'Back': '7',
+            'Start': '8'
+        }
+
+        self.ui_to_joystick_equivalence = {v: k for k, v in self.joystick_to_ui_equivalence.items()}
+
 
         self.joystick = None
         self.init_joystick()
@@ -137,13 +150,14 @@ class JoystickLayout(BaseLayout):
         def handle_joystick_button_press(event):
             if event.button in self.joystick_mapping:
                 button_name = self.joystick_mapping[event.button]
-                print(f"Botón del joystick presionado: '{button_name}' (botón {event.button})")
+                ui_equiv = self.joystick_to_ui_equivalence.get(button_name, button_name)
+
 
                 if not (self.local_recorder or self.remote_recorder):
                     print("No hay EventRecorder activo — primero hacé clic en un botón en pantalla.")
                     return
                 
-                if button_name == self.active_button:
+                if ui_equiv == self.active_button:
                     start_pressed_clip(button_name)
                 else:
                     print(f"Botón '{button_name}' != activo '{self.active_button}' → cancelando grabación.")
@@ -152,9 +166,11 @@ class JoystickLayout(BaseLayout):
         def handle_joystick_button_release(event):
             if event.button in self.joystick_mapping:
                 button_name = self.joystick_mapping[event.button]
-                print(f"Botón del joystick liberado: '{button_name}' (botón {event.button})")
-                
-                if (self.active_button and button_name == self.active_button and self.is_recording_clips):
+                ui_equiv = self.joystick_to_ui_equivalence.get(button_name, button_name)
+
+              
+
+                if (self.active_button and ui_equiv == self.active_button and self.is_recording_clips):
                     switch_to_released_clip(button_name)
 
 
@@ -205,7 +221,9 @@ class JoystickLayout(BaseLayout):
                 print("Recorder local listo.")
             if self.remote_recorder:
                 print("Recorder remota listo.")
-            print(f"Presiona la tecla '{button_name}' para empezar a grabar clips")
+            joystick_name = self.ui_to_joystick_equivalence.get(button_name, button_name)
+            print(f"Presiona la tecla '{joystick_name}' para empezar a grabar clips")
+            
 
         def switch_to_released_clip(key_name):
             #Cambiamos estado de presioando a soltado
