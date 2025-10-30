@@ -318,9 +318,8 @@ class JoystickLayout(BaseLayout):
 
         self.back_button.draw((0,0))
         title_section_rect = self.title_section.draw_title_section((0,0), "Visualizacion Joystick")
-        instructions_rect = self.instructions_section.draw_instructions_section((0, title_section_rect.height))
-        camera_one_rect = self.local_camera_section.draw_camera((instructions_rect.width,title_section_rect.height))
-        camera_two_rect = self.remote_camera_section.draw_camera((instructions_rect.width,camera_one_rect.bottom+10))
+        camera_one_rect = self.local_camera_section.draw_camera((400,title_section_rect.height))
+        camera_two_rect = self.remote_camera_section.draw_camera((400,camera_one_rect.bottom+10))
         self.button_section.draw_button_section((0,self.screen.get_height()-100))
 
         # Obtenemos el frame de la camra de la pantalla
